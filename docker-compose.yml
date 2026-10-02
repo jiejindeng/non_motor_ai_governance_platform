@@ -1,0 +1,11 @@
+services:
+  governance-web:
+    build: .
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./models:/app/models
+      - ./output:/app/output
+    environment:
+      GOVERNANCE_MODEL: /app/models/best.pt
+      GOVERNANCE_OUTPUT: /app/output

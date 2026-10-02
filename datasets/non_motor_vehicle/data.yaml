@@ -1,0 +1,11 @@
+# Three-class dataset design used by the project roadmap.
+# Put the final merged/split YOLO-format dataset under this directory.
+path: .
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: bicycle
+  1: electric_bicycle
+  2: tricycle

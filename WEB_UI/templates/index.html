@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-block">
+      <div class="brand-kicker">AI TRAFFIC GOVERNANCE</div>
+      <div class="brand-name">非机动车<br>智慧治理平台</div>
+      <div class="brand-version">WEB · V1.0</div>
+    </div>
+
+    <nav class="nav-list">
+      <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>治理总览</span></button>
+      <button class="nav-item" data-page="monitor"><span class="nav-icon">◉</span><span>实时监控</span></button>
+      <button class="nav-item" data-page="events"><span class="nav-icon">!</span><span>事件中心</span></button>
+      <button class="nav-item" data-page="devices"><span class="nav-icon">▦</span><span>设备管理</span></button>
+      <button class="nav-item" data-page="rules"><span class="nav-icon">⌘</span><span>规则配置</span></button>
+      <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span><span>系统设置</span></button>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+    <div class="system-card">
+      <div class="system-card-title">系统状态</div>
+      <div class="status-row"><span class="status-dot" id="sideStatusDot"></span><span id="sideStatusText">AI 引擎就绪</span></div>
+      <div class="status-caption" id="sideDeviceText">等待分析任务</div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="mobile-menu" id="mobileMenu">☰</button>
+      <div>
+        <h1 id="pageTitle">治理总览</h1>
+        <p id="pageSubtitle">核心指标、治理事件与设备状态一屏掌握</p>
+      </div>
+      <div class="topbar-actions">
+        <div class="engine-badge"><span class="pulse-dot"></span><span id="engineBadgeText">AI 引擎已加载</span></div>
+        <div class="clock" id="clock"></div>
+      </div>
+    </header>
+
+    <section class="page active" id="page-dashboard">
+      <div class="metric-grid">
+        <article class="metric-card accent-blue"><div class="metric-label">今日通行目标</div><div class="metric-number" id="metricFlow">0</div><div class="metric-foot">基于轨迹去重统计</div></article>
+        <article class="metric-card accent-red"><div class="metric-label">今日治理事件</div><div class="metric-number" id="metricEvents">0</div><div class="metric-foot">闯入 / 逆行 / 滞留</div></article>
+        <article class="metric-card accent-green"><div class="metric-label">在线设备</div><div class="metric-number" id="metricDevices">0</div><div class="metric-foot">摄像头与视频源</div></article>
+        <article class="metric-card accent-violet"><div class="metric-label">实时推理 FPS</div><div class="metric-number" id="metricFps">0.0</div><div class="metric-foot">当前分析任务</div></article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel hero-panel">
+          <div class="panel-heading"><div><span class="eyebrow">SMART GOVERNANCE</span><h2>让传统监控从“看得见”升级为“看得懂”</h2></div></div>
+          <p class="hero-copy">摄像头画面接入后，平台自动完成目标识别、轨迹跟踪、治理规则判断、异常告警、截图留证与统计分析。</p>
+          <div class="process-flow">
+            <div class="flow-node"><b>01</b><span>视频接入</span></div><i>→</i>
+            <div class="flow-node"><b>02</b><span>AI 识别</span></div><i>→</i>
+            <div class="flow-node"><b>03</b><span>轨迹分析</span></div><i>→</i>
+            <div class="flow-node"><b>04</b><span>规则判断</span></div><i>→</i>
+            <div class="flow-node"><b>05</b><span>告警留证</span></div>
+          </div>
+          <div class="hero-actions"><button class="btn primary" data-jump="monitor">进入实时监控</button><button class="btn ghost" data-jump="events">查看治理事件</button></div>
+        </article>
+
+        <article class="panel trend-panel">
+          <div class="panel-heading"><div><span class="eyebrow">7 DAYS</span><h2>近 7 日治理趋势</h2></div><div class="legend"><span><i class="legend-flow"></i>通行目标</span><span><i class="legend-event"></i>治理事件</span></div></div>
+          <canvas id="trendCanvas" height="220"></canvas>
+        </article>
+      </div>
+
+      <article class="panel table-panel">
+        <div class="panel-heading"><div><span class="eyebrow">LATEST EVENTS</span><h2>最新治理事件</h2></div><button class="text-button" data-jump="events">查看全部 →</button></div>
+        <div class="table-wrap"><table><thead><tr><th>时间</th><th>设备</th><th>事件类型</th><th>目标</th><th>置信度</th></tr></thead><tbody id="dashboardEventsBody"></tbody></table></div>
+        <div class="empty-state" id="dashboardEmpty">暂无治理事件，启动实时分析后将在这里显示。</div>
+      </article>
+    </section>
+
+    <section class="page" id="page-monitor">
+      <article class="panel control-panel">
+        <div class="control-grid">
+          <label class="field"><span>设备</span><select id="monitorDevice"></select></label>
+          <label class="field grow"><span>摄像头 / RTSP / HTTP 视频流</span><input id="monitorSource" value="0" placeholder="0 / rtsp://... / http://..."></label>
+          <div class="model-chip"><span>当前模型</span><b id="monitorModelName">best.pt</b></div>
+        </div>
+        <div class="action-bar">
+          <input id="imageInput" type="file" accept="image/jpeg,image/png,image/bmp" hidden>
+          <input id="folderInput" type="file" accept="image/*" webkitdirectory multiple hidden>
+          <input id="videoInput" type="file" accept="video/mp4,video/x-msvideo,video/quicktime,.mkv" hidden>
+          <input id="quickModelInput" type="file" accept=".pt" hidden>
+          <button class="btn ghost" id="chooseModelBtn">选择模型</button>
+          <button class="btn primary" id="imageDetectBtn">图片检测</button>
+          <button class="btn ghost" id="batchDetectBtn">文件夹批量检测</button>
+          <button class="btn ghost" id="videoDetectBtn">视频检测</button>
+          <button class="btn success" id="cameraStartBtn">启动实时监控</button>
+          <button class="btn ghost" id="saveResultBtn">保存当前结果</button>
+          <button class="btn danger" id="stopStreamBtn">停止任务</button>
+        </div>
+        <div class="task-message" id="taskMessage">选择一种检测方式开始分析。</div>
+      </article>
+
+      <div class="preview-grid">
+        <article class="panel preview-card">
+          <div class="preview-header"><div><span class="eyebrow">SOURCE</span><h2>原始画面</h2></div><span class="live-pill muted" id="sourceLivePill">等待输入</span></div>
+          <div class="preview-stage"><img id="originalPreview" alt="原始画面"><div class="preview-empty" id="originalEmpty"><div class="preview-mark">◎</div><b>等待输入</b><span>上传图片、视频或接入实时视频流</span></div></div>
+        </article>
+        <article class="panel preview-card">
+          <div class="preview-header"><div><span class="eyebrow">AI ANALYSIS</span><h2>AI 检测与治理结果</h2></div><span class="live-pill muted" id="resultLivePill">等待检测</span></div>
+          <div class="preview-stage"><img id="resultPreview" alt="检测结果"><div class="preview-empty" id="resultEmpty"><div class="preview-mark ai">AI</div><b>等待检测</b><span>检测框、轨迹 ID 与治理区域将在这里显示</span></div></div>
+        </article>
+      </div>
+
+      <div class="mini-stat-grid">
+        <div class="mini-stat"><span>当前目标</span><b id="streamTargets">0</b></div>
+        <div class="mini-stat"><span>活动轨迹</span><b id="streamTracks">0</b></div>
+        <div class="mini-stat"><span>本帧事件</span><b id="streamEvents">0</b></div>
+        <div class="mini-stat"><span>实时 FPS</span><b id="streamFps">0.0</b></div>
+        <div class="mini-stat"><span>处理帧数</span><b id="streamFrames">0</b></div>
+      </div>
+
+      <article class="panel log-panel">
+        <div class="panel-heading"><div><span class="eyebrow">RUNTIME LOG</span><h2>运行日志</h2></div><button class="text-button" id="clearLogBtn">清空显示</button></div>
+        <div class="log-box" id="logBox"></div>
+      </article>
+    </section>
+
+    <section class="page" id="page-events">
+      <article class="panel table-panel full-height-panel">
+        <div class="panel-heading event-toolbar">
+          <div><span class="eyebrow">EVIDENCE CENTER</span><h2>事件留证记录</h2></div>
+          <div class="toolbar-right"><input class="search-input" id="eventSearch" placeholder="搜索设备 / 事件 / 目标"><button class="btn ghost small" id="refreshEventsBtn">刷新</button><a class="btn primary small" href="/api/events/export">导出 CSV</a></div>
+        </div>
+        <div class="event-summary"><span>事件会自动记录时间、设备、类型、轨迹 ID、置信度和截图证据。</span><b id="eventCountLabel">0 条记录</b></div>
+        <div class="table-wrap tall"><table><thead><tr><th>时间</th><th>设备</th><th>事件类型</th><th>目标</th><th>轨迹 ID</th><th>置信度</th><th>证据</th></tr></thead><tbody id="eventsBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="page" id="page-devices">
+      <div class="devices-layout">
+        <article class="panel device-form-panel">
+          <div class="panel-heading"><div><span class="eyebrow">DEVICE PROFILE</span><h2>新增 / 编辑设备</h2></div></div>
+          <input type="hidden" id="deviceEditId">
+          <label class="field stacked"><span>设备名称</span><input id="deviceName" placeholder="例如：学校东门"></label>
+          <label class="field stacked"><span>视频源</span><input id="deviceSource" placeholder="0 / rtsp://... / http://..."></label>
+          <label class="field stacked"><span>安装位置</span><input id="deviceLocation" placeholder="例如：东门入口"></label>
+          <div class="stack-actions"><button class="btn primary" id="saveDeviceBtn">新增设备</button><button class="btn ghost" id="resetDeviceBtn">清空表单</button><button class="btn danger" id="deleteDeviceBtn">删除选中</button></div>
+          <div class="form-tip">设备保存后可在“实时监控”中一键调用，也可直接输入 RTSP / HTTP 视频流地址。</div>
+        </article>
+        <article class="panel table-panel">
+          <div class="panel-heading"><div><span class="eyebrow">CAMERA NETWORK</span><h2>设备列表</h2></div><button class="btn ghost small" id="refreshDevicesBtn">刷新设备</button></div>
+          <div class="table-wrap tall"><table><thead><tr><th>ID</th><th>设备名称</th><th>视频源</th><th>位置</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="devicesBody"></tbody></table></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page" id="page-rules">
+      <div class="rules-layout">
+        <article class="panel rules-panel">
+          <div class="panel-heading"><div><span class="eyebrow">AI RULE ENGINE</span><h2>治理规则参数</h2></div></div>
+          <p class="panel-copy">规则作用于视频 / 摄像头的实时目标轨迹。治理区域坐标按画面百分比配置。</p>
+          <div class="switch-grid">
+            <label class="switch-card"><input type="checkbox" id="ruleForbidden"><span class="switch-ui"></span><span><b>禁行区域闯入</b><small>目标进入治理区域时告警</small></span></label>
+            <label class="switch-card"><input type="checkbox" id="ruleWrongWay"><span class="switch-ui"></span><span><b>逆行预警</b><small>轨迹方向与允许方向相反</small></span></label>
+            <label class="switch-card"><input type="checkbox" id="ruleDwell"><span class="switch-ui"></span><span><b>区域异常滞留</b><small>区域内停留超过阈值时告警</small></span></label>
+          </div>
+          <div class="rule-input-grid">
+            <label class="field stacked"><span>区域 X (%)</span><input type="number" id="zoneX" min="0" max="100" step="0.1"></label>
+            <label class="field stacked"><span>区域 Y (%)</span><input type="number" id="zoneY" min="0" max="100" step="0.1"></label>
+            <label class="field stacked"><span>区域宽度 (%)</span><input type="number" id="zoneW" min="1" max="100" step="0.1"></label>
+            <label class="field stacked"><span>区域高度 (%)</span><input type="number" id="zoneH" min="1" max="100" step="0.1"></label>
+            <label class="field stacked"><span>允许通行方向</span><select id="expectedDirection"><option value="ltr">从左向右</option><option value="rtl">从右向左</option><option value="ttb">从上向下</option><option value="btt">从下向上</option></select></label>
+            <label class="field stacked"><span>滞留阈值（秒）</span><input type="number" id="dwellSeconds" min="2" max="120" step="1"></label>
+            <label class="field stacked"><span>逆行位移阈值（px）</span><input type="number" id="motionPx" min="10" max="300" step="1"></label>
+            <label class="field stacked"><span>事件冷却时间（秒）</span><input type="number" id="eventCooldown" min="1" max="120" step="1"></label>
+          </div>
+          <button class="btn primary wide" id="applyRulesBtn">应用治理规则</button>
+        </article>
+        <article class="panel zone-preview-panel">
+          <div class="panel-heading"><div><span class="eyebrow">ZONE PREVIEW</span><h2>治理区域预览</h2></div></div>
+          <div class="zone-canvas" id="zoneCanvas"><div class="street-lines"></div><div class="zone-rect" id="zoneRect"><span>GOVERNANCE ZONE</span></div><div class="demo-track"><i></i><i></i><i></i><i></i></div></div>
+          <div class="zone-hint"><b>说明</b><span>橙色区域为当前规则作用区域。实际检测时将叠加到 AI 结果画面。</span></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="settings-grid">
+        <article class="panel settings-card">
+          <div class="panel-heading"><div><span class="eyebrow">AI ENGINE</span><h2>模型管理</h2></div></div>
+          <div class="setting-row"><span>当前模型</span><code id="settingModel">-</code></div>
+          <input id="settingModelInput" type="file" accept=".pt" hidden>
+          <button class="btn primary" id="settingModelBtn">上传并切换 .pt 模型</button>
+          <p class="form-tip" id="modelNote"></p>
+        </article>
+        <article class="panel settings-card">
+          <div class="panel-heading"><div><span class="eyebrow">STORAGE</span><h2>数据与存储</h2></div></div>
+          <div class="setting-row"><span>输出目录</span><code id="settingOutput">-</code></div>
+          <div class="setting-row"><span>事件数据库</span><code id="settingDb">-</code></div>
+          <div class="setting-row"><span>截图目录</span><code id="settingSnapshots">-</code></div>
+        </article>
+        <article class="panel settings-card span-2">
+          <div class="panel-heading"><div><span class="eyebrow">DEPLOYMENT</span><h2>平台能力</h2></div></div>
+          <div class="capability-grid"><span>✓ 图片检测</span><span>✓ 文件夹批量检测</span><span>✓ 视频分析</span><span>✓ 摄像头 / RTSP</span><span>✓ 目标轨迹 ID</span><span>✓ 禁区闯入</span><span>✓ 逆行预警</span><span>✓ 异常滞留</span><span>✓ 自动截图留证</span><span>✓ SQLite 事件库</span><span>✓ 设备管理</span><span>✓ CSV 导出</span></div>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

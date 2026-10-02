@@ -1,0 +1,24 @@
+{
+  "target_classes": ["bicycle", "electric_bicycle", "tricycle"],
+  "sources": [
+    {
+      "name": "dlsu",
+      "root": "/absolute/path/to/dlsu_dataset",
+      "yaml": "data.yaml",
+      "class_map": {
+        "Bicycle": "bicycle",
+        "Electric Bike": "electric_bicycle",
+        "Tricycle": "tricycle"
+      }
+    },
+    {
+      "name": "ebiki",
+      "root": "/absolute/path/to/ebiki_dataset",
+      "yaml": "data.yaml",
+      "class_map": {
+        "bicycle": "bicycle",
+        "E-bike": "electric_bicycle"
+      }
+    }
+  ]
+}
